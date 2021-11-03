@@ -1,2 +1,2 @@
-# pb2_chwp_control
-Control software for the PB2b and PB2c cryogenic half-wave plate
+# pb2b_chwp_deployment
+Control and DAQ software for the PB2b cryogenic half-wave plate
