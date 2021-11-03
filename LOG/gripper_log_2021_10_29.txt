@@ -1,0 +1,28 @@
+[2021-10-29 06:02:00] Logging to file '/mnt/c/Users/bbixl/Desktop/pb2_chwp_control/Gripper/src/../../LOG/gripper_log_2021_10_29.txt'
+[2021-10-29 06:02:01] Turned off BRAKE for axis 1 in Control.BRAKE()
+[2021-10-29 06:02:01] Successfully turned on BRAKE for axis 1 in Control.BRAKE()
+[2021-10-29 06:02:01] Turned off BRAKE for axis 2 in Control.BRAKE()
+[2021-10-29 06:02:01] Successfully turned on BRAKE for axis 2 in Control.BRAKE()
+[2021-10-29 06:02:01] Turned off BRAKE for axis 3 in Control.BRAKE()
+[2021-10-29 06:02:01] Successfully turned on BRAKE for axis 3 in Control.BRAKE()
+[2021-10-29 06:03:02] Logging to file '/mnt/c/Users/bbixl/Desktop/pb2_chwp_control/Gripper/src/../../LOG/gripper_log_2021_10_29.txt'
+[2021-10-29 06:03:02] Turned on BRAKE for axis 1 in Control.BRAKE()
+[2021-10-29 06:03:02] Successfully turned off BRAKE for axis 1 in Control.BRAKE()
+[2021-10-29 06:03:02] Turned on BRAKE for axis 2 in Control.BRAKE()
+[2021-10-29 06:03:02] Successfully turned off BRAKE for axis 2 in Control.BRAKE()
+[2021-10-29 06:03:02] Turned on BRAKE for axis 3 in Control.BRAKE()
+[2021-10-29 06:03:02] Successfully turned off BRAKE for axis 3 in Control.BRAKE()
+[2021-10-29 06:42:21] Logging to file '/mnt/c/Users/bbixl/Desktop/pb2_chwp_control/Gripper/src/../../LOG/gripper_log_2021_10_29.txt'
+[2021-10-29 06:42:21] Turned off BRAKE for axis 1 in Control.BRAKE()
+[2021-10-29 06:42:21] Successfully turned on BRAKE for axis 1 in Control.BRAKE()
+[2021-10-29 06:42:21] Turned off BRAKE for axis 2 in Control.BRAKE()
+[2021-10-29 06:42:21] Successfully turned on BRAKE for axis 2 in Control.BRAKE()
+[2021-10-29 06:42:21] Turned off BRAKE for axis 3 in Control.BRAKE()
+[2021-10-29 06:42:21] Successfully turned on BRAKE for axis 3 in Control.BRAKE()
+[2021-10-29 06:42:59] Logging to file '/mnt/c/Users/bbixl/Desktop/pb2_chwp_control/Gripper/src/../../LOG/gripper_log_2021_10_29.txt'
+[2021-10-29 06:42:59] Turned on BRAKE for axis 1 in Control.BRAKE()
+[2021-10-29 06:42:59] Successfully turned off BRAKE for axis 1 in Control.BRAKE()
+[2021-10-29 06:42:59] Turned on BRAKE for axis 2 in Control.BRAKE()
+[2021-10-29 06:42:59] Successfully turned off BRAKE for axis 2 in Control.BRAKE()
+[2021-10-29 06:42:59] Turned on BRAKE for axis 3 in Control.BRAKE()
+[2021-10-29 06:43:00] Successfully turned off BRAKE for axis 3 in Control.BRAKE()
