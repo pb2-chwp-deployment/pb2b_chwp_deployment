@@ -13,7 +13,7 @@ sys.path.append(
 import chwp_control as cc
 import pb2b_config as cg
 import log_control as lg
-import ups_controller as uc
+import aux2_ups_controller as uc
 
 class SHUTDOWN:
     def __init__(self, ups_ip, status_pkl):
@@ -39,7 +39,7 @@ class SHUTDOWN:
             self.ups.update()
             self.ups.disconnect()
 
-            if float(self.ups.battery_percent) > 50:
+            if float(self.ups.batt_capacity) > 80:
                 sleep(10)
                 self._load_status()
             else:
@@ -75,5 +75,5 @@ class SHUTDOWN:
             pkl.dump(self.status, status_file)
         return True
 
-chwp_shutdown = SHUTDOWN(cg.ups_ip, cg.status_file)
+chwp_shutdown = SHUTDOWN(cg.aux2_ups_ip, cg.aux2_status_file)
 chwp_shutdown.monitor()

@@ -11,15 +11,15 @@ sys.path.append(
     os.path.join(this_dir, 'src'))
 
 import pb2b_config as cg
-import ups_controller
+import mux_ups_controller
 
-# Change this to the directory which holds slowdaq
+# Import Slowdaq
 sys.path.append(cg.slowdaq_folder)
 from slowdaq.pb2 import Publisher
 
 # Instantiates publisher instance for the ups
-pub = Publisher('ups_info', cg.slowdaq_ip, cg.slowdaq_port)
-ups = ups_controller.UPS(cg.ups_ip)
+pub = Publisher('mux_ups_info', cg.slowdaq_ip, cg.slowdaq_port)
+ups = mux_ups_controller.UPS(cg.mux_ups_ip)
 
 while True:
     try:

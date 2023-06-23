@@ -205,7 +205,7 @@ class CHWP_Control:
         return True
 
     def start_emergency_monitor(self):
-        with open(os.path.join(this_dir, cg.status_file), 'rb') as status_file:
+        with open(os.path.join(this_dir, cg.aux2_status_file), 'rb') as status_file:
             status = pkl.load(status_file)
             if status['off'] == False:
                 self._log.out('CHWP_Control.start_emergency_monitor(): Monitor already running')
@@ -215,7 +215,7 @@ class CHWP_Control:
         return True
 
     def stop_emergency_monitor(self):
-        with open(os.path.join(this_dir, cg.status_file), 'wb') as status_file:
+        with open(os.path.join(this_dir, cg.aux2_status_file), 'wb') as status_file:
             status = pkl.load(status_file)
             if status['off'] == True:
                 self._log.out('CHWP_Control.stop_emergency_monitor(): Monitor already stopped')

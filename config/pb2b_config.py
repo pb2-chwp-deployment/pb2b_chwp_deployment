@@ -52,5 +52,7 @@ slowdaq_port = 8000
 slowdaq_conn_attempts = 5
 
 #ups
-ups_ip = '192.168.2.60'
-status_file = 'status.pkl'
+mux_ups_ip = '192.168.2.60'
+mux_status_file = 'mux_status.pkl'
+aux2_ups_ip = '192.168.2.59'
+aux2_status_file = 'aux2_status.pkl'
