@@ -125,7 +125,7 @@ class PMX:
         self.ser.write(str.encode("VOLT:EXT:SOUR?\n\r"))
         self.wait()
         val = self.ser.readline()
-        msg = "External source = %s" % (val)
+        msg = "External source = %s" % (str(val))
         print(msg)
 
         return msg
@@ -138,7 +138,7 @@ class PMX:
         self.ser.write(str.encode("VOLT:EXT:SOUR?\n\r"))
         self.wait()
         val = self.ser.readline()
-        msg = "External source = %s" % (val)
+        msg = "External source = %s" % (str(val))
         print(msg)
 
         return msg
@@ -171,7 +171,7 @@ class PMX:
 
         return msg
 
-def turn_on(self):
+    def turn_on(self):
         """ Turn the PMX on """
         self.clean_serial()
         self.ser.write(str.encode("OUTP ON\n\r"))
@@ -224,7 +224,10 @@ def turn_on(self):
             self.using_tcp = False
             msg = "Connected to RTU port %s" % (rtu_port)
         elif tcp_ip is not None and tcp_port is not None:
-            self.ser = mx.Serial_TCPServer((tcp_ip, tcp_port), timeout)
+            if timeout is None:
+                self.ser = mx.Serial_TCPServer((tcp_ip, tcp_port))
+            else:
+                self.ser = mx.Serial_TCPServer((tcp_ip, tcp_port), timeout=timeout)
             self._tcp_ip = tcp_ip
             self._tcp_port = int(tcp_port)
             self.using_tcp = True

@@ -1,4 +1,4 @@
-i# Slowdaq publisher for the MUX UPS
+# Slowdaq publisher for the MUX UPS
 
 # Imports
 import os, sys

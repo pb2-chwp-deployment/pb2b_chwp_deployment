@@ -19,15 +19,15 @@ bb2_pass = 'pb4000#$'
 
 #cyberswitch
 cyberswitch_tcp_ip = '192.168.2.52'
-cyberswitch_tcp_port = '4001'
+cyberswitch_tcp_port = 4001
 
 #kikusui bias power supply
-kbias_ips = ['192.168.2.56', '192.168.2.56']
-kbias_ports = [4003, 4004]
+kbias_ips = ['192.168.2.53', '192.168.2.53']
+kbias_ports = [4001, 4002]
 
 #kikusui drive power supply
-kdrive_ip = '192.168.2.56'
-kdrive_port = 4002
+kdrive_ip = '192.168.2.53'
+kdrive_port = 4003
 
 #grippers
 gripper_ip = '192.168.2.52'

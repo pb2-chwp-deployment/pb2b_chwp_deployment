@@ -24,7 +24,7 @@ class PID:
         self.hex_freq = '00000'
         self.cur_freq = 0
         self.stop_params = [0.2, 0, 0]
-        self.tune_params = [0.2, 63, 0]
+        self.tune_params = [0.2, 115, 0]
         self.set_direction('0')
 
 ########################################################################################################################

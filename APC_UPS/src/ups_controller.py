@@ -108,7 +108,7 @@ class UPS:
 ########################################################################################################################
 
 if __name__ == '__main__':
-    MUX2_UPS = UPS('192.168.2.60')
+    MUX2_UPS = UPS('192.168.2.89')
     print("Output Info:", MUX2_UPS.output_info)
     print("Input Info:", MUX2_UPS.input_info)
     print("Battery Percentage", MUX2_UPS.battery_percent)
