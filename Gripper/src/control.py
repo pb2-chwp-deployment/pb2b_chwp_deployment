@@ -490,7 +490,7 @@ class Control:
         status_dict["ALARM2"] = int(not self._JXC.read(self._JXC.ALARM2))
         status_dict["ALARM3"] = int(not self._JXC.read(self._JXC.ALARM3))
         for key, value in status_dict.items():
-            self.log.out("%s = %d" % (key, value))
+            print("%s = %d" % (key, value))
         return status_dict
 
     def ALARM(self):

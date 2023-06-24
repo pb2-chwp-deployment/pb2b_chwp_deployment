@@ -22,7 +22,7 @@ sy.path.append(
     os.path.join(this_dir, "..", "config"))
 
 import gripper as gp  # noqa: E402
-import NP_05B as cs  # noqa: E402
+import NP05B as cs  # noqa: E402
 import log_control as lg  # noqa: E402
 import pid_controller as pc
 import pmx_open_command_close as occ
@@ -32,12 +32,16 @@ class CHWP_Control:
     def __init__(self):
         # Connect to the gripper using default settings
         self.GPR = gp.Gripper()
-        self.CS = cs.NP_05B()
+        self.CS = cs.NP05B()
         self._pos_file = os.path.join(
-            this_dir, '..', "POS", "chwp_control_positions.txt")
+            this_dir, '..', 'Gripper', "POS", "chwp_control_positions.txt")
         self._read_pos()
         self._log = lg.Logging()
-        self.pid = pc.PID()
+
+        old_stdout = sy.stdout
+        sy.stdout = open(os.devnull, 'w')
+        self.pid = pc.PID(cg.pid_ip, cg.pid_port)
+        sy.stdout = old_stdout
         self._pid_direction = True
         return
 
@@ -145,7 +149,7 @@ class CHWP_Control:
                     return False
             occ.open_command_close('OFF')
             self.rotation_direction(self._pid_direction)
-            print(' '*30 end = '\r')
+            print(' '*30, end = '\r')
             print('CHWP stopped')
             self._log.out("CHWP_Control.rotation_stop(): CHWP stopped")
             return True
@@ -220,7 +224,7 @@ class CHWP_Control:
             if status['off'] == True:
                 self._log.out('CHWP_Control.stop_emergency_monitor(): Monitor already stopped')
                 return False
-            elif status['off'] == False and status['stopping'] = True:
+            elif status['off'] == False and status['stopping'] == True:
                 self._log.out('CHWP_Control.stop_emergency_monitor(): Emergency shutdown in progress')
                 return False
             else:
@@ -228,6 +232,9 @@ class CHWP_Control:
                 pkl.dump(status, status_file)
                 self._log.out('CHWP_Control.stop_emergency_monitor(): Stopping monitor')
                 return True
+
+    def start_slowdaq_publishers(self):
+        pass
 
     # ***** Private Methods *****
     def _rotation_mode(self, mode = 'PID'):
@@ -309,7 +316,7 @@ class CHWP_Control:
         """ Write positions to file """
         for k in self.pos.keys():
             self._posf.write(
-                "%-20s%-10.1f%-10.1f%-10.1f\n"
+                "20s%-10.1f%-10.1f%-10.1f%\n"
                 % (k, self.pos[k][0], self.pos[k][1],
                    self.pos[k][2]))
         return
