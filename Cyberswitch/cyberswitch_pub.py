@@ -14,7 +14,7 @@ sys.path.append(cg.slowdaq_folder)
 
 from slowdaq.pb2 import Publisher
 
-pub = Publisher('Cyberswitch',cg.slowdaq_ip,cg.slowdaq_port)
+pub = Publisher('CHWP_Cyberswitch',cg.slowdaq_ip,cg.slowdaq_port)
  
 while True:    
     try:

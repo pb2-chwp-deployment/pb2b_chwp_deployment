@@ -43,7 +43,7 @@
 import time
 import socket
 
-MOXA_DEFAULT_TIMEOUT = 1.0
+MOXA_DEFAULT_TIMEOUT = 0.2
 
 # Socket modes:
 # Nonblocking
@@ -76,7 +76,7 @@ class Serial_TCPServer(object):
     # Reads exactly n bytes, waiting up to timeout.
     def readexactly(self,n):
         t0 = time.time()
-        msg = ""
+        msg = b''
         timeout = self.gettimeout()
         while len(msg) < n:
             newtimeout = timeout-(time.time()-t0)
@@ -89,14 +89,14 @@ class Serial_TCPServer(object):
         # Flush the message out if you got everything
         if len(msg) == n: msg = self.sock.recv(n)
         # Otherwise tell nothing and leave the data in the buffer
-        else: msg = ''
+        else: msg = b''
         self.settimeout(timeout)
         return msg
 
 
     # Reads whatever is in the buffer right now, but is O(N) in buffer size.
     def readbuf_slow(self,n):
-        msg = ''
+        msg = b''
         self.sock.setblocking(0)
         try:
             for i in range(n):
@@ -108,12 +108,15 @@ class Serial_TCPServer(object):
 
     # Log recode of readbuf.  Usable for large buffers.
     def readbuf(self,n):
-        if n == 0: return ''
+        if n == 0: return b''
         try:
             msg = self.sock.recv(n)
-        except: msg = ''
-        n2 = min(n-len(msg),n/2)
-        return msg + self.readbuf(n2)
+        except: msg = b''
+        n2 = min(n-len(msg),n//2)
+        if len(msg):
+            return msg + self.readbuf(n2)
+        else:
+            return msg
 
 
     # Will probably read whatever arrives in the buffer, up to n or the timeout
@@ -122,21 +125,22 @@ class Serial_TCPServer(object):
         try:
             msg = self.sock.recv(n)
         except:
-            msg = ''
+            msg = b''
         return msg
 
     # Will read whatever arrives in the buffer, up to n or the timeout
     def read(self,n):
         msg = self.readexactly(n)
         n2 = n-len(msg)
+        t2 = time.time()
         if n2 > 0: msg += self.readbuf(n2)
         return msg
 
-    def readline(self,term='\n'):
+    def readline(self,term=b'\n'):
         msg = b''
         while True:
             c = self.readexactly(1)
-            if c == term or c == '':
+            if c == term or c == b'':
                 return msg
             msg += c
 
@@ -144,8 +148,8 @@ class Serial_TCPServer(object):
         msg = b''
         while 1:
             c = self.readexactly(1)
-            if c == '\r': return msg
-            if c == '': return False
+            if c == b'\r': return msg
+            if c == b'': return False
             msg += c
         return msg
 

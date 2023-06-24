@@ -23,9 +23,9 @@ class Command:
             "OFF [port]: turn off port [port], for which the options are 1-5\n"
             "ALL ON:  turn on all ports\n"
             "ALL OFF: turn off all ports\n"
-            "REBOOT [port]: reboot port [port], for which the options are 1-5"
-            "STATUS: print status of each port"
-            "HELP: display this help menu"
+            "REBOOT [port]: reboot port [port], for which the options are 1-5\n"
+            "STATUS: print status of each port\n"
+            "HELP: display this help menu\n"
             "EXIT: quit program\n")
         print(wrstr)
         return True

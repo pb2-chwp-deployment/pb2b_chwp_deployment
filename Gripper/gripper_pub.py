@@ -14,7 +14,7 @@ sys.path.append(cg.slowdaq_folder)
 
 from slowdaq.pb2 import Publisher
 
-pub = Publisher('Gripper',cg.slowdaq_ip,cg.slowdaq_port)
+pub = Publisher('CHWP_Gripper',cg.slowdaq_ip,cg.slowdaq_port)
 
 while True:
     try:

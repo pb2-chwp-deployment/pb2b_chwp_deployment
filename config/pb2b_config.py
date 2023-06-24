@@ -46,9 +46,9 @@ pid_stop_i = 0
 pid_stop_d = 0
 
 #slowdaq
-slowdaq_folder = '/home/polarbear/slowdaq'
-slowdaq_ip = '192.168.2.109'
-slowdaq_port = 8000
+slowdaq_folder = '/home/polarbear/slowdaq3'
+slowdaq_ip = '192.168.2.102'
+slowdaq_port = 3141
 slowdaq_conn_attempts = 5
 
 #ups

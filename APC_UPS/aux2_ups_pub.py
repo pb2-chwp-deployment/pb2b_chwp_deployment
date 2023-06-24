@@ -18,7 +18,7 @@ sys.path.append(cg.slowdaq_folder)
 from slowdaq.pb2 import Publisher
 
 # Instantiates publisher instance for the ups
-pub = Publisher('aux2_ups_info', cg.slowdaq_ip, cg.slowdaq_port)
+pub = Publisher('PB2B_AUX2_UPS', cg.slowdaq_ip, cg.slowdaq_port)
 ups = aux2_ups_controller.UPS(cg.aux2_ups_ip)
 
 while True:

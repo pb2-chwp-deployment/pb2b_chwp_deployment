@@ -1,4 +1,4 @@
-# Built-in python modules
+#Built-in python modules
 import time as tm
 import serial as sr
 import sys as sy
@@ -161,8 +161,8 @@ class NP05B:
             return self._ser.readlines()
         else:
             raw_out = self._ser.read(self._bytes_to_read)
-            out = raw_out.replace('\r', ' ').replace('\x00', '')
-            return out
+            out = raw_out.replace(b'\r', b' ').replace(b'\x00', b'')
+            return out.split(b' ')
 
     def check_output(self, cmd):
         """ Check the output """
@@ -193,7 +193,7 @@ class NP05B:
     def _deactivate_telnet(self):
         """ Attempt to deactivate Telnet session to the device """
         self.log.log("Telnet session active! Trying to deactivate...")
-        cmd = '!'
+        cmd = b'!'
         self._write(cmd)
         out = self._ser.readlines()[0]
         if cmd in out:

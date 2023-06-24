@@ -14,7 +14,7 @@ sys.path.append(cg.slowdaq_folder)
 
 from slowdaq.pb2 import Publisher
 
-pub = Publisher('PID_CHWP', cg.slowdaq_ip, cg.slowdaq_port)
+pub = Publisher('CHWP_PID', cg.slowdaq_ip, cg.slowdaq_port)
 pid = pc.PID(cg.pid_ip, cg.pid_port)
 
 while True:
@@ -27,7 +27,7 @@ while True:
         if type(hwp_freq) == float or type(hwp_freq) == int:
             pub.serve()
             data = pub.pack({'PID frequency':hwp_freq})
-            print('Sending data')
+            print(f'HWP Frequency: {hwp_freq}')
             pub.queue(data)
             sleep(10)
         else:
