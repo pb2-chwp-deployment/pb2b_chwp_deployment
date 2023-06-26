@@ -43,10 +43,17 @@ class CHWP_Control:
         self.pid = pc.PID(cg.pid_ip, cg.pid_port)
         sy.stdout = old_stdout
         self._pid_direction = True
+
+        self.pubs = {'aux2_ups': None,
+                     'cyberswitch': None,
+                     'gripper': None,
+                     'pid': None,
+                     'pmx': None}
         return
 
     def __del__(self):
         self._write_pos()
+        self.atop_slowdaq_publishers()
         return
 
     # ***** Public Methods *****
@@ -234,7 +241,28 @@ class CHWP_Control:
                 return True
 
     def start_slowdaq_publishers(self):
-        pass
+        self.pubs['aux2_ups'] = subprocess.Popen(os.path.join(this_dir, '..', 'APC_UPS', 'aux2_ups_pub.py'), 
+                                                 stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+        self.pubs['cyberswitch'] = subprocess.Popen(os.path.join(this_dir, '..', 'Cyberswitch', 'cyberswitch_pub.py'), 
+                                                    stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+        self.pubs['gripper'] = subprocess.Popen(os.path.join(this_dir, '..', 'Gripper', 'gripper_pub.py'), 
+                                                stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+        self.pubs['pid'] = subprocess.Popen(os.path.join(this_dir, '..', 'Omega_PID', 'pid_pub.py'), 
+                                            stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+        self.pubs['pmx'] = subprocess.Popen(os.path.join(this_dir, '..', 'PMX', 'pmx_pub.py'), 
+                                            stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+        for key in self.pubs.keys():
+            output = self.pubs[key].communicate()[0]
+            if output is not None:
+                print(f'{key}:', output)
+        return True
+
+    def stop_slowdaq_publishers(self):
+        for key in self.pubs.keys():
+            if self.pubs[key] is not None:
+                self.pubs[key].kill()
+                print(f'{key}: Publisher killed')
+        return True
 
     # ***** Private Methods *****
     def _rotation_mode(self, mode = 'PID'):
