@@ -22,20 +22,26 @@ pub = Publisher('PB2B_AUX2_UPS', cg.slowdaq_ip, cg.slowdaq_port)
 ups = aux2_ups_controller.UPS(cg.aux2_ups_ip)
 
 while True:
-	try:
-		ups.update()
-	except:
-		print('Connection Error! Trying again...')
-		sleep(2)
-	else:
-		pub.serve()
-		data = pub.pack({'input_voltage': ups.input_voltage,
-				 'input_freq': ups.input_freq,
-				 'batt_capacity': ups.batt_capacity,
-				 'output_status': ups.output_status,
-				 'output_voltage': ups.output_voltage,
-				 'output_freq': ups.output_freq,
-				 'output_load': ups.output_load})
-		print('Sending data')
-		pub.queue(data)
-		sleep(10)
+    try:
+        ups.update()
+    except:
+        print('Connection Error! Trying again...')
+        sleep(2)
+    else:
+        pub.serve()
+        data_dict = {'input_voltage': ups.input_voltage,
+                     'input_freq': ups.input_freq,
+                     'batt_capacity': ups.batt_capacity,
+                     'output_status': ups.output_status,
+                     'output_voltage': ups.output_voltage,
+                     'output_freq': ups.output_freq,
+                     'output_load': ups.output_load}
+        
+        print('PB2b AUX2 UPS: Status')
+        for key in data_dict.keys():
+            print(f'{key}: {data_dict[key]}')
+        print('')
+
+        data = pub.pack(data_dict)
+        pub.queue(data)
+        sleep(10)
