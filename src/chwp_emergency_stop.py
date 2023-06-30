@@ -8,7 +8,7 @@ sys.path.append(this_dir)
 sys.path.append(
     os.path.join(this_dir, '..', 'config'))
 sys.path.append(
-    os.path.join(this_dir, '..', 'APC_UPC', 'src'))
+    os.path.join(this_dir, '..', 'APC_UPS', 'src'))
 
 import chwp_control as cc
 import pb2b_config as cg
@@ -34,12 +34,11 @@ class SHUTDOWN:
 
     def monitor(self):
         self.status = {'stopping': False, 'off': False}
+        self._set_status()
         while not self.status['stopping']:
-            self.ups.connect()
             self.ups.update()
-            self.ups.disconnect()
-
             if float(self.ups.batt_capacity) > 80:
+                print(f'Battery capacity: {self.ups.batt_capacity} %                     ', end = '\r')
                 sleep(10)
                 self._load_status()
             else:
@@ -61,7 +60,7 @@ class SHUTDOWN:
                 sleep(30)
                 self.cc.cold_grip()
                 self._log.out('CHWP_Emergency_Shutdown: Shutdown complete')
-        
+       
         self.status = {'stopping': True, 'off': True}
         self._set_status()
 

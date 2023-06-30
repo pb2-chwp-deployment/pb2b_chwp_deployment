@@ -12,7 +12,7 @@ this_dir = os.path.dirname(__file__)
 
 class UPS:
     # Information needed for UPS connection
-    def __init__(self, ups_ip, lock_file_name = os.path.join(this_dir, '.apc1_port_busy')):
+    def __init__(self, ups_ip, lock_file_name = os.path.join(this_dir, '.mux_port_busy')):
         self.HOST = ups_ip
         self.USER = 'apc'
         self.PASSWORD = 'apc'

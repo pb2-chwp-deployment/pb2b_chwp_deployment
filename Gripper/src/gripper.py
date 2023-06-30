@@ -236,7 +236,7 @@ class Gripper:
     def INP(self):
         """ Return control INP """
         outs = self.CTL.INP()
-        # for i in range(3):
+        #for i in range(3):
         #    self.log.out("INP%d = %d" % (i+1, outs[i]))
         return outs
 

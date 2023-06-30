@@ -1,11 +1,16 @@
 from easysnmp import Session
 import os
+import fcntl
+import time
+
+this_dir = os.path.dirname(__file__)
 
 class UPS:
-    def __init__(self, host_ip):
+    def __init__(self, host_ip, lock_file_name = os.path.join(this_dir, '.aux2_port_busy')):
         self.HOST = host_ip
         self.USER = 'PCBEUser'
         self.snmp_version = 1
+        self.lock_file_name = lock_file_name
 
         self.session = Session(hostname=self.HOST, community=self.USER, 
                                version=self.snmp_version)
@@ -23,6 +28,14 @@ class UPS:
         self.output_load_oid = 'iso.3.6.1.4.1.318.1.1.1.4.2.3.0'
 
     def update(self):
+        while True:
+            try:
+                self.lock_file = open(self.lock_file_name)
+                fcntl.flock(self.lock_file, fcntl.LOCK_EX | fcntl.LOCK_NB)
+                break
+            except BlockingIOError:
+                time.sleep(0.1)
+
         self.input_cable()
         self.battery_charge()
         self.output_cable()

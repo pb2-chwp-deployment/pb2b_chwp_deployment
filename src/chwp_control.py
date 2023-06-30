@@ -42,7 +42,7 @@ class CHWP_Control:
         sy.stdout = open(os.devnull, 'w')
         self.pid = pc.PID(cg.pid_ip, cg.pid_port)
         sy.stdout = old_stdout
-        self._pid_direction = True
+        self._pid_direction = 'forward'
 
         self.pubs = {'aux2_ups': None,
                      'cyberswitch': None,
@@ -51,9 +51,9 @@ class CHWP_Control:
                      'pmx': None}
         return
 
-    def __del__(self):
+    def __exit__(self):
         self._write_pos()
-        self.atop_slowdaq_publishers()
+        self.stop_slowdaq_publishers()
         return
 
     # ***** Public Methods *****
@@ -112,6 +112,12 @@ class CHWP_Control:
         self._log.out("CHWP_Control.griper_home(): Gripper homed")
         return self.GPR.OFF()
 
+    def gripper_reset(self):
+        """ Reset the gripper alarm """
+        self.GPR.RESET()
+        self._log.out("CHWP_Control.gripper_reset(): Gripper controller reset")
+        return True
+
     def gripper_reboot(self):
         """ Reboot the CHWP electronics """
         self.CS.OFF(1)
@@ -121,31 +127,64 @@ class CHWP_Control:
         self.CS.ON(2)
         self.CS.ON(3)
         self._log.out("CHWP_Control.gripper_reboot(): Gripper control rebooted")
-        return
+        return True
 
-    def rotation_direction(self, direction = True):
-        if direction:
+    def rotation_bias(self, power = 'off'):
+        if type(power) is not str:
+            self._log.out('Invalid argument type')
+            return False
+
+        if power.lower() not in ['on', 'off']:
+            self._log.out('Invalid argument value')
+            return False
+
+        try:
+            occ.open_command_close(power,ip=cg.kbias_ips[0],
+                                   port=cg.kbias_ports[0],
+                                   lock='.bias1_port_busy')
+            occ.open_command_close(power,ip=cg.kbias_ips[1],
+                                   port=cg.kbias_ports[1],
+                                   lock='.bias2_port_busy')
+            return True
+        except BlockingIOError:
+            self._log.out('Blocking Error, trying again')
+            tm.sleep(0.5)
+            self.rotation_bias(power = power)
+        return False
+
+
+    def rotation_direction(self, direction = 'forward'):
+        if type(direction) is not str:
+            self._log.out('Invalid argument type')
+            return False
+
+        if direction.lower() not in ['forward','reverse']:
+            self._log.out('Invalid argument value')
+            return False
+        
+        if direction == 'forward':
             self.pid.set_direction('0')
-            self._pid_direction = True
+            self._pid_direction = 'forward'
             self._log.out("CHWP_Control.rotation_direction(): CHWP direction set to forward")
             return True
-        elif not direction:
+        elif direction == 'reverse':
             self.pid.set_direction('1')
-            self._pid_direction = False
+            self._pid_direction = 'reverse'
             self._log.out("CHWP_Control.rotation_direction(): CHWP direction set to reverse")
             return True
-        else:
-            self._log.out("ERROR: Invalid direction entered")
-            return False
 
     def rotation_stop(self):
         try:
             self._rotation_mode('PID')
-            self.rotation_direction(not self._pid_direction)
+            if self._pid_direction == 'forward':
+                self.rotation_direction(direction = 'reverse')
+            else:
+                self.rotation_direction(direction = 'forward')
             self.pid.tune_stop()
             occ.open_command_close('ON')
             tm.sleep(1)
             cur_freq = self.pid.get_freq()
+            self._log.out(f'Starting Frequency: {cur_freq} Hz')
             start_time = tm.perf_counter()
             while cur_freq > 0.15:
                 cur_freq = self.pid.get_freq()
@@ -155,9 +194,11 @@ class CHWP_Control:
                     self._log.err("CHWP_Control.rotation_stop(): Stop took too long")
                     return False
             occ.open_command_close('OFF')
-            self.rotation_direction(self._pid_direction)
+            if self._pid_direction == 'forward':
+                self.rotation_direction(direction = 'reverse')
+            else:
+                self.rotation_direction(direction = 'forward')
             print(' '*30, end = '\r')
-            print('CHWP stopped')
             self._log.out("CHWP_Control.rotation_stop(): CHWP stopped")
             return True
         except KeyboardInterrupt:
@@ -168,7 +209,7 @@ class CHWP_Control:
     def rotation_spin(self, frequency = 0.0):
         if float(frequency) <= 3.5:
             try:
-                print('Starting time is {}'.format(tm.time()))
+                self._log.out('Starting time is {}'.format(tm.time()))
                 self._rotation_mode('PID')
                 self.rotation_direction(self._pid_direction)
                 self.pid.declare_freq(float(frequency))
@@ -180,26 +221,29 @@ class CHWP_Control:
                     cur_freq = self.pid.get_freq()
                     print('Current Frequency =', cur_freq, 'Hz    ', end = '\r')
                 print(' '*30, end = '\r')
-                print('Tuning finished')
                 self._log.out("CHWP_Control.rotation_spin(): Tuning finished")
                 return True
             except KeyboardInterrupt:
+                occ.open_command_close('OFF')
                 self._log.err("CHWP_Control.rotation_spin(): User interrupt")
                 return False
         else:
             pass
 
     def rotation_voltage(self, voltage = 0.0):
-        if float(voltage) <= 32.0:
+        if type(voltage) not in [float, int]:
+            self._log.out('Invalid argument type')
+            return False
+        
+        if float(voltage) <= 32.0 and float(voltage) >= 0.0:
             self._rotation_mode('VOLT')
             self.rotation_direction(self._pid_direction)
             occ.open_command_close('V {}'.format(voltage))
             occ.open_command_close('ON')
             self._log.out("CHWP_Control.rotation_voltage(): CHWP drive voltage set to {} volts".format(voltage))
-            self._log.out()
             return True
         else:
-            self._log.out("ERROR: Invalid voltage entered")
+            self._log.out("Invalid argument value")
             return False
 
     def rotation_off(self):
@@ -218,15 +262,15 @@ class CHWP_Control:
     def start_emergency_monitor(self):
         with open(os.path.join(this_dir, cg.aux2_status_file), 'rb') as status_file:
             status = pkl.load(status_file)
-            if status['off'] == False:
+            if status['stopping'] == False:
                 self._log.out('CHWP_Control.start_emergency_monitor(): Monitor already running')
                 return False
-        subprocess.call(['nohup', os.path.join(this_dir, 'chwp_emergency_stop.py'), '&'])
+        subprocess.Popen(['python3', os.path.join(this_dir, 'chwp_emergency_stop.py')])
         self._log.out('CHWP_Control.start_emergency_monitor(): Monitor started')
         return True
 
     def stop_emergency_monitor(self):
-        with open(os.path.join(this_dir, cg.aux2_status_file), 'wb') as status_file:
+        with open(os.path.join(this_dir, cg.aux2_status_file), 'rb') as status_file:
             status = pkl.load(status_file)
             if status['off'] == True:
                 self._log.out('CHWP_Control.stop_emergency_monitor(): Monitor already stopped')
@@ -234,34 +278,36 @@ class CHWP_Control:
             elif status['off'] == False and status['stopping'] == True:
                 self._log.out('CHWP_Control.stop_emergency_monitor(): Emergency shutdown in progress')
                 return False
-            else:
-                status['stopping'] = True
-                pkl.dump(status, status_file)
-                self._log.out('CHWP_Control.stop_emergency_monitor(): Stopping monitor')
-                return True
+            
+        with open(os.path.join(this_dir, cg.aux2_status_file), 'wb') as status_file_w:
+            status['stopping'] = True
+            pkl.dump(status, status_file_w)
+            self._log.out('CHWP_Control.stop_emergency_monitor(): Stopping monitor')
+            return True
 
     def start_slowdaq_publishers(self):
-        self.pubs['aux2_ups'] = subprocess.Popen(os.path.join(this_dir, '..', 'APC_UPS', 'aux2_ups_pub.py'), 
+        self.pubs['aux2_ups'] = subprocess.Popen(['python3', os.path.join(this_dir, '..', 'APC_UPS', 
+                                                                          'aux2_ups_pub.py')], 
                                                  stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
-        self.pubs['cyberswitch'] = subprocess.Popen(os.path.join(this_dir, '..', 'Cyberswitch', 'cyberswitch_pub.py'), 
+        self.pubs['cyberswitch'] = subprocess.Popen(['python3', os.path.join(this_dir, '..', 'Cyberswitch', 
+                                                                             'cyberswitch_pub.py')], 
                                                     stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
-        self.pubs['gripper'] = subprocess.Popen(os.path.join(this_dir, '..', 'Gripper', 'gripper_pub.py'), 
+        self.pubs['gripper'] = subprocess.Popen(['python3', os.path.join(this_dir, '..', 'Gripper', 
+                                                                         'gripper_pub.py')], 
                                                 stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
-        self.pubs['pid'] = subprocess.Popen(os.path.join(this_dir, '..', 'Omega_PID', 'pid_pub.py'), 
+        self.pubs['pid'] = subprocess.Popen(['python3', os.path.join(this_dir, '..', 'Omega_PID', 
+                                                                     'pid_pub.py')], 
                                             stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
-        self.pubs['pmx'] = subprocess.Popen(os.path.join(this_dir, '..', 'PMX', 'pmx_pub.py'), 
+        self.pubs['pmx'] = subprocess.Popen(['python3', os.path.join(this_dir, '..', 'PMX', 'pmx_pub.py')], 
                                             stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
-        for key in self.pubs.keys():
-            output = self.pubs[key].communicate()[0]
-            if output is not None:
-                print(f'{key}:', output)
+        self._log.out('CHWP_Control.start_slowdaq_publishers(): Publishers started')
         return True
 
     def stop_slowdaq_publishers(self):
         for key in self.pubs.keys():
             if self.pubs[key] is not None:
                 self.pubs[key].kill()
-                print(f'{key}: Publisher killed')
+                self._log.out(f'{key}: Publisher killed')
         return True
 
     # ***** Private Methods *****
@@ -299,7 +345,7 @@ class CHWP_Control:
                         if in_position[i]:
                             continue
                         elif not in_position[i]:
-                            self.GPR.RESET()
+                            print(self.GPR.RESET())
                             finished[i] = True
                     else:
                         continue
