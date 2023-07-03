@@ -21,17 +21,17 @@ sy.path.append(
 sy.path.append(
     os.path.join(this_dir, "..", "config"))
 
-import gripper as gp  # noqa: E402
 import NP05B as cs  # noqa: E402
 import log_control as lg  # noqa: E402
 import pid_controller as pc
-import pmx_open_command_close as occ
+import pmx_open_command_close as pocc
+import gripper_open_command_close as gocc
 import pb2b_config as cg
+
 
 class CHWP_Control:
     def __init__(self):
         # Connect to the gripper using default settings
-        self.GPR = gp.Gripper()
         self.CS = cs.NP05B()
         self._pos_file = os.path.join(
             this_dir, '..', 'Gripper', "POS", "chwp_control_positions.txt")
@@ -61,22 +61,18 @@ class CHWP_Control:
         """ Squeeze the rotor assuming it is supported """
         self._squeeze(0.1)
         self._pos_from_user(mode="Warm_Centered")
-        return self.GPR.OFF()
+        return gocc.open_command_close('OFF')
 
     def cooldown_grip(self, time_incr=3600.):
         """ Squeeze the rotor little by little every hour """
         while True:  # User must exit this program
             try:
-                # Move each gripper backwards first
-                #for i in range(1, 4):
-                #    self.GPR.MOVE('POS', -0.1, i)
-                # Then, re-squeeze the rotor
                 result = self._squeeze(0.1)
 
                 if result:
                     self._log.out(
                         "CHWP_Control.cooldown_grip(): Rotor regripped")
-                    self.GPR.OFF()
+                    gocc.open_command_close('OFF')
                     self._sleep(time_incr)
                     continue
                 else:
@@ -86,7 +82,7 @@ class CHWP_Control:
             except KeyboardInterrupt:
                 self._pos_from_user(mode="Cooldown_Finish")
                 break
-        return self.GPR.OFF()
+        return gocc.open_command_close('OFF')
 
     def cold_grip(self):
         """ Grip the CHWP while cold, assuming it will warm up """
@@ -95,26 +91,33 @@ class CHWP_Control:
         # Then backup by 1 mm to allow some compliance
         # for rotor expansion during warmup
         for i in range(1, 4):
-            self.GPR.MOVE('POS', -1.0, i)
+            gocc.open_command_close(f'MOVE POS {i} -1.0')
         # Turn off the motors
-        return self.GPR.OFF()
+        return gocc.open_command_close('OFF')
 
     def cold_ungrip(self):
         """ Ungrip the CHWP after cooling is finished """
         self._pos_from_user(mode="Cold_Ungrip")
         self._release()
         self._log.out("CHWP_Control.cold_ungrip(): Rotor ungripped")
-        return self.GPR.OFF()
+        return gocc.open_command_close('OFF')
 
     def gripper_home(self):
         """ Home the grippers """
-        self.GPR.HOME()
+        gocc.open_command_close('HOME')
         self._log.out("CHWP_Control.griper_home(): Gripper homed")
-        return self.GPR.OFF()
+        return gocc.open_command_close('OFF')
+
+    def gripper_alarm(self):
+        """ Query the alarm state """
+        cur_alarm = occ.open_command_close('ALARM')
+        self._log.out(f'Total alarm state: {cur_alarm}')
+        self._log.out("CHWP_Control.gripper_alarm(): Gripper alarm queried")
+        return True
 
     def gripper_reset(self):
         """ Reset the gripper alarm """
-        self.GPR.RESET()
+        occ.open_command_close('RESET')
         self._log.out("CHWP_Control.gripper_reset(): Gripper controller reset")
         return True
 
@@ -139,12 +142,13 @@ class CHWP_Control:
             return False
 
         try:
-            occ.open_command_close(power,ip=cg.kbias_ips[0],
+            pocc.open_command_close(power,ip=cg.kbias_ips[0],
                                    port=cg.kbias_ports[0],
                                    lock='.bias1_port_busy')
-            occ.open_command_close(power,ip=cg.kbias_ips[1],
+            pocc.open_command_close(power,ip=cg.kbias_ips[1],
                                    port=cg.kbias_ports[1],
                                    lock='.bias2_port_busy')
+            self._log.out(f"CHWP_Control.rotation_bias(): Bias power supply status changed to: {power}")
             return True
         except BlockingIOError:
             self._log.out('Blocking Error, trying again')
@@ -173,6 +177,17 @@ class CHWP_Control:
             self._log.out("CHWP_Control.rotation_direction(): CHWP direction set to reverse")
             return True
 
+    def rotation_status(self):
+        cur_vc = pocc.open_command_close('VC?')
+        cur_out = pocc.open_command_close('O?')
+        cur_freq = self.pid.get_freq()
+        self._log.out(f'PMX Voltage: {cur_vc[0]} V')
+        self._log.out(f'PMX Current: {cur_vc[1]} A')
+        self._log.out(f'PMX Output: {cur_out[0]}')
+        self._log.out(f'Rotation Frequency: {cur_freq} Hz')
+        self._log.out(f'Rotation Direction: {self._pid_direction}')
+        return True
+
     def rotation_stop(self):
         try:
             self._rotation_mode('PID')
@@ -181,7 +196,7 @@ class CHWP_Control:
             else:
                 self.rotation_direction(direction = 'forward')
             self.pid.tune_stop()
-            occ.open_command_close('ON')
+            pocc.open_command_close('ON')
             tm.sleep(1)
             cur_freq = self.pid.get_freq()
             self._log.out(f'Starting Frequency: {cur_freq} Hz')
@@ -190,10 +205,10 @@ class CHWP_Control:
                 cur_freq = self.pid.get_freq()
                 print('Current Frequency =', cur_freq, 'Hz    ', end = '\r')
                 if abs(start_time - tm.perf_counter()) > 100:
-                    occ.open_command_close('OFF')
+                    pocc.open_command_close('OFF')
                     self._log.err("CHWP_Control.rotation_stop(): Stop took too long")
                     return False
-            occ.open_command_close('OFF')
+            pocc.open_command_close('OFF')
             if self._pid_direction == 'forward':
                 self.rotation_direction(direction = 'reverse')
             else:
@@ -202,7 +217,7 @@ class CHWP_Control:
             self._log.out("CHWP_Control.rotation_stop(): CHWP stopped")
             return True
         except KeyboardInterrupt:
-            occ.open_command_close('OFF')
+            pocc.open_command_close('OFF')
             self._log.err("CHWP_Control.rotation_stop(): User interrupt")
             return False
 
@@ -214,7 +229,7 @@ class CHWP_Control:
                 self.rotation_direction(self._pid_direction)
                 self.pid.declare_freq(float(frequency))
                 self.pid.tune_freq()
-                occ.open_command_close('ON')
+                pocc.open_command_close('ON')
                 tm.sleep(1)
                 cur_freq = self.pid.get_freq()
                 while abs(cur_freq - frequency) > 0.005:
@@ -224,7 +239,7 @@ class CHWP_Control:
                 self._log.out("CHWP_Control.rotation_spin(): Tuning finished")
                 return True
             except KeyboardInterrupt:
-                occ.open_command_close('OFF')
+                pocc.open_command_close('OFF')
                 self._log.err("CHWP_Control.rotation_spin(): User interrupt")
                 return False
         else:
@@ -238,8 +253,8 @@ class CHWP_Control:
         if float(voltage) <= 32.0 and float(voltage) >= 0.0:
             self._rotation_mode('VOLT')
             self.rotation_direction(self._pid_direction)
-            occ.open_command_close('V {}'.format(voltage))
-            occ.open_command_close('ON')
+            pocc.open_command_close('V {}'.format(voltage))
+            pocc.open_command_close('ON')
             self._log.out("CHWP_Control.rotation_voltage(): CHWP drive voltage set to {} volts".format(voltage))
             return True
         else:
@@ -247,7 +262,7 @@ class CHWP_Control:
             return False
 
     def rotation_off(self):
-        occ.open_command_close('OFF')
+        pocc.open_command_close('OFF')
         self._log.out("CHWP_Control.rotation_off(): Drive power turned off")
         return True
 
@@ -313,11 +328,11 @@ class CHWP_Control:
     # ***** Private Methods *****
     def _rotation_mode(self, mode = 'PID'):
         if mode == 'PID':
-            occ.open_command_close('U')
+            pocc.open_command_close('U')
             self._log.out("CHWP_Control.rotation_mode(): CHWP set to PID control")
             return True
         elif mode == 'VOLT':
-            occ.open_command_close('I')
+            pocc.open_command_close('I')
             self._log.out("CHWP_Control.rotation_mode(): CHWP set to direct voltage control")
             return True
         else:
@@ -345,7 +360,7 @@ class CHWP_Control:
                         if in_position[i]:
                             continue
                         elif not in_position[i]:
-                            print(self.GPR.RESET())
+                            gocc.open_command_close('RESET')
                             finished[i] = True
                     else:
                         continue
@@ -360,13 +375,13 @@ class CHWP_Control:
 
     def _push(self, incr, axis):
         """ Push a given axis forward a given amount """
-        self.GPR.MOVE('PUSH', incr, axis)
-        inps = self.GPR.INP()
+        gocc.open_command_close(f'MOVE PUSH {axis} {incr}')
+        inps = gocc.open_command_close('INP')
         return inps
 
     def _release(self, incr=0.1):
         """ Home the motors """
-        return self.GPR.HOME()
+        return gocc.open_command_close('HOME')
 
     def _pos_from_user(self, mode=None):
         """ Obtain manually-inputted motor positions """

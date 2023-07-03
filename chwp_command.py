@@ -17,10 +17,12 @@ def print_help():
     print('cooldown_grip:               Periodically grip the CHWP rotor as the cryostat cools down')
     print('cold_grip:                   Grip the CHWP rotor when the crystat is cold')
     print('gripper_home:                Send all grippers to their home positions')
+    print('gripper_alarm:               Prints the current gripper alarm state')
     print('gripper_reset:               Attempt to reset the current gripper alarm')
     print('gripper_reboot:              Cycle power to the gripper controller')
     print("rotation_bias [value]:       Turn on/off biasing power supplies: ['on' or 'off']")
     print("rotation_direction [value]:  Set the CHWP rotation direction: ['forward' or 'reverse']")
+    print('rotation_status:             Print status of the PID controller and PMX power supply')
     print('rotation_stop:               Use PID to stop the CHWP rotation')
     print('rotation_spin [value]:       Use PID to rotate CHWP at provided frequency [0.0 - 3.0]')
     print('rotation_voltage [value]:    Set the drive voltage to a specific value [0.0 - 36.0]')
@@ -39,12 +41,13 @@ def exit():
 def process_command(user_input):
     args = user_input.split(' ')
     cmd = args[0].lower()
-    func = cmds[cmd]
-    
     if cmd not in cmds.keys():
         print("Cannot understand command")
-        print("Type 'HELP' gor a list of commands.")
-    elif func == CC.rotation_direction:
+        print("Type 'help' for a list of commands.")
+        return
+
+    func = cmds[cmd]
+    if func == CC.rotation_direction:
         func(str(args[1]))
     elif func == CC.rotation_spin:
         func(float(args[1]))
@@ -63,10 +66,12 @@ cmds = {'warm_grip': CC.warm_grip,
         'cold_grip': CC.cold_grip,
         'cold_ungrip': CC.cold_ungrip,
         'gripper_home': CC.gripper_home,
+        'gripper_alarm': CC.gripper_alarm,
         'gripper_reset': CC.gripper_reset,
         'gripper_reboot': CC.gripper_reboot,
         'rotation_bias': CC.rotation_bias,
         'rotation_direction': CC.rotation_direction,
+        'rotation_status': CC.rotation_status,
         'rotation_stop': CC.rotation_stop,
         'rotation_spin': CC.rotation_spin,
         'rotation_voltage': CC.rotation_voltage,
