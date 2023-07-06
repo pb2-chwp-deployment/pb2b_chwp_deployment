@@ -1,0 +1,14 @@
+#!/usr/bin/expect
+
+set PASSWORD [lindex $argv 2]
+set IP [lindex $argv 1]
+set NAME [lindex $argv 0]
+
+log_user 0
+
+spawn ssh $NAME@$IP
+expect "password:" {send "$PASSWORD\r"}
+expect "$ " {send "sudo reboot\r"}
+expect ": " {send "$PASSWORD\r"}
+expect "$ " {send "echo done"}
+

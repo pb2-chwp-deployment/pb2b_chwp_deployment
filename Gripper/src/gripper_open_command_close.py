@@ -1,8 +1,8 @@
-import sys, os
+import sys
+import os
 
 this_dir = os.path.dirname(__file__)
-sys.path.append(
-    os.path.join(this_dir, 'src'))
+sys.path.append(this_dir)
 sys.path.append(
     os.path.join(this_dir, '..', '..', 'config'))
 
@@ -15,7 +15,7 @@ import command_gripper as cd
 import fcntl as f
 
 def open_command_close(cmd):
-    lockfile = open('.port_busy')
+    lockfile = open(os.path.join(this_dir, '.gripper_port_busy'))
     f.flock(lockfile, f.LOCK_EX | f.LOCK_NB)
     if cg.use_tcp:
         PLC = c0.C000DRD(tcp_ip=cg.gripper_ip, tcp_port=cg.gripper_port)

@@ -1,4 +1,5 @@
-import sys, os
+import sys
+import os
 
 this_dir = os.path.dirname(__file__)
 sys.path.append(
@@ -11,7 +12,7 @@ import command_NP05B as cm
 import fcntl as f
 
 def open_command_close(cmd):
-    lockfile = open('.port_busy')
+    lockfile = open(os.path.join(this_dir, '.cyberswitch_port_busy'))
     f.flock(lockfile, f.LOCK_EX | f.LOCK_NB)
     NP05B = np.NP05B(tcp_ip=cg.cyberswitch_tcp_ip, tcp_port=cg.cyberswitch_tcp_port)
     CMD = cm.Command(NP05B)

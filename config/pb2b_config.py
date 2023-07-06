@@ -10,11 +10,11 @@ use_tcp = True
 
 #beaglebone black
 bb1_username = 'polarbear'
-bb1_ip = '192.168.2.56'
+bb1_ip = '192.168.2.55'
 bb1_pass = 'pb4000#$'
 
 bb2_username = 'polarbear'
-bb2_ip = '192.168.2.57'
+bb2_ip = '192.168.2.56'
 bb2_pass = 'pb4000#$'
 
 #cyberswitch

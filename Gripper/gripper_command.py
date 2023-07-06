@@ -1,7 +1,8 @@
 #!/usr/bin/python3
 
 # Built-in python modules
-import sys, os
+import sys
+import os
 from time import sleep
 
 this_dir = os.path.dirname(__file__)

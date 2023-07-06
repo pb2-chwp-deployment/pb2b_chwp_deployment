@@ -1,5 +1,8 @@
 #!/usr/bin/python3
-import os, sys, fcntl
+import os
+import sys
+import argparse
+import fcntl
 import pickle as pkl
 from time import sleep
 
@@ -32,13 +35,16 @@ class SHUTDOWN:
         self.status = {'stopping': True, 'off': True}
         self._set_status()
 
-    def monitor(self):
+    def monitor(self, verb = False):
         self.status = {'stopping': False, 'off': False}
         self._set_status()
+        if verb:
+            print()
         while not self.status['stopping']:
             self.ups.update()
             if float(self.ups.batt_capacity) > 80:
-                print(f'Battery capacity: {self.ups.batt_capacity} %                     ', end = '\r')
+                if verb:
+                    print(f'Battery capacity: {self.ups.batt_capacity} %                     ', end = '\r')
                 sleep(10)
                 self._load_status()
             else:
@@ -63,6 +69,9 @@ class SHUTDOWN:
        
         self.status = {'stopping': True, 'off': True}
         self._set_status()
+        print()
+        self._log.out('CHWP_Emergency_Shutdown: Monitor Stopped')
+        return True
 
     def _load_status(self):
         with open(os.path.join(this_dir, self.status_pkl), 'rb') as status_file:
@@ -74,5 +83,13 @@ class SHUTDOWN:
             pkl.dump(self.status, status_file)
         return True
 
+ps = argparse.ArgumentParser(
+    description='Emergency stop program for the PB2b CHWP')
+ps.add_argument('-v', action = 'store', dest = 'verb', type = int, default = 0)
+args = ps.parse_args()
+
 chwp_shutdown = SHUTDOWN(cg.aux2_ups_ip, cg.aux2_status_file)
-chwp_shutdown.monitor()
+if len(sys.argv) > 1:
+    chwp_shutdown.monitor(verb = args.verb)
+else:
+    chwp_shutdown.monitor()
