@@ -38,9 +38,12 @@ class CHWP_Control:
         self._log = lg.Logging()
 
         old_stdout = sys.stdout
-        sys.stdout = open(os.devnull, 'w')
-        self.pid = pc.PID(cg.pid_ip, cg.pid_port)
-        sys.stdout = old_stdout
+        
+        with open(os.devnull, 'w') as devnull:
+            sys.stdout = devnull
+            self.pid = pc.PID(cg.pid_ip, cg.pid_port)
+            sys.stdout = old_stdout
+        
         self._pid_direction = 'forward'
 
         self.bbs = {'encoder1': None,
@@ -66,6 +69,7 @@ class CHWP_Control:
         """ Squeeze the rotor assuming it is supported """
         self._squeeze(0.1)
         self._pos_from_user(mode="Warm_Centered")
+        self._log.out('CHWP_control.warm_grip(): Rotor warm gripped')
         return gocc.open_command_close('OFF')
 
     def cooldown_grip(self, time_incr=3600.):
@@ -88,16 +92,20 @@ class CHWP_Control:
                 self._pos_from_user(mode="Cooldown_Finish")
                 break
         
+        self._log.out('CHWP_Control.cooldown_grip(): Cooldown grip finished')
         return gocc.open_command_close('OFF')
 
     def cold_grip(self):
         """ Grip the CHWP while cold, assuming it will warm up """
+        gocc.open_command_close('ON')
         # First squeeze the rotor
         self._squeeze(1.0)
         # Then backup by 1 mm to allow some compliance
         # for rotor expansion during warmup
         for i in range(1, 4):
             gocc.open_command_close(f'MOVE POS {i} -1.0')
+
+        self._log.out('CHWP_Control.cold_grip(): Cold grip finished')
         # Turn off the motors
         return gocc.open_command_close('OFF')
 
@@ -113,6 +121,20 @@ class CHWP_Control:
         gocc.open_command_close('HOME')
         self._log.out("CHWP_Control.griper_home(): Gripper homed")
         return gocc.open_command_close('OFF')
+
+    def gripper_brake(self, value):
+        """ Change the gripper brake state """
+        if type(value) is not str:
+            self._log.out('Invalid argument type')
+            return False
+
+        if value.lower() not in ['on', 'off']:
+            self._log.out('Invalid argument value')
+            return False
+
+        gocc.open_command_close(f'BRAKE {value}')
+        self._log.out('CHWP_Control.gripper_brake(): Gripper brake state changed')
+        return True
 
     def gripper_alarm(self):
         """ Query the alarm state """
@@ -210,7 +232,10 @@ class CHWP_Control:
             self.pid.tune_stop()
             pocc.open_command_close('ON')
             time.sleep(1)
+            
             cur_freq = self.pid.get_freq()
+            start_freq = cur_freq
+            start_dir = self._pid_direction
             self._log.out(f'Starting Frequency: {cur_freq} Hz')
             start_time = time.perf_counter()
             
@@ -218,7 +243,15 @@ class CHWP_Control:
                 cur_freq = self.pid.get_freq()
                 print('Current Frequency =', cur_freq, 'Hz    ', end = '\r')
             
-                if abs(start_time - time.perf_counter()) > 100:
+                if abs(start_time - time.perf_counter()) > 8 and cur_freq >= start_freq \
+                        and start_dir == self._pid_direction:
+                    self._log.out('CHWP_Control.rotation_stop(): Trying other direction')
+                    self.rotation_stop()
+                elif cur_freq > 2.5:
+                    pocc.open_command_close('OFF')
+                    self._log.err('CHWP_Control.rotation_stop(): Stop error, spinning too fast')
+                    return False
+                elif abs(start_time - time.perf_counter()) > 360:
                     pocc.open_command_close('OFF')
                     self._log.err("CHWP_Control.rotation_stop(): Stop took too long")
                     return False
@@ -479,31 +512,38 @@ class CHWP_Control:
         return
 
     def _squeeze(self, incr=0.1):
-        alarm = [False for i in range(3)]
-        finished = [False for i in range(3)]
+        self._log.out('Squeezing')
+        old_stdout = sys.stdout
         
-        # Iterate through all motors at least once
-        while not all(finished):
-            for i in range(3):
-                try:
-                    if not finished[i] or first_pass:
-                        alarm[i] = self._push(incr, i + 1)
-                        if not alarm[i]:
+        with open(os.devnull, 'w') as devnull:
+            sys.stdout = devnull
+            alarm = [False for i in range(3)]
+            finished = [False for i in range(3)]
+        
+            # Iterate through all motors at least once
+            while not all(finished):
+                for i in range(3):
+                    try:
+                        if not finished[i] or first_pass:
+                            alarm[i] = self._push(incr, i + 1)
+                            if not alarm[i]:
+                                continue
+                            elif alarm[i]:
+                                gocc.open_command_close('RESET')
+                                finished[i] = True
+                        else:
                             continue
-                        elif alarm[i]:
-                            gocc.open_command_close('RESET')
-                            finished[i] = True
-                    else:
-                        continue
-                except KeyboardInterrupt:
-                    self._log.err(
-                        "CHWP_Control._squeeze(): User interrupt")
-                    return True
+                    except KeyboardInterrupt:
+                        sys.stdout = old_stdout
+                        self._log.err(
+                            "CHWP_Control._squeeze(): User interrupt")
+                        return True
         
-            first_pass = False
+                first_pass = False
         
-        self._log.out("CHWP_Control._squeeze(): Finished squeezing")
-        return True
+            sys.stdout = old_stdout
+            self._log.out("CHWP_Control._squeeze(): Finished squeezing")
+            return True
     
     def _push(self, incr, axis):
         """ Push a given axis forward a given amount """

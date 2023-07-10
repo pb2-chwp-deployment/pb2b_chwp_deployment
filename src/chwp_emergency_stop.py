@@ -23,6 +23,7 @@ class SHUTDOWN:
         self.ups = uc.UPS(ups_ip)
         self.status_pkl = status_pkl
         self._log = lg.Logging()
+        self.cc = cc.CHWP_Control()
 
         try:
             self._load_status()
@@ -60,11 +61,13 @@ class SHUTDOWN:
                         self._log.out('ERROR: Still cannot control grippers')
 
                 if not self.cc.rotation_stop():
+                    self.cc.rotation_off()
                     sleep(1500)
                 
-                self._log.out('CHWP_Emergency_Shutdown: Waiting 30sec for CHWP to completely stop')
-                sleep(30)
+                self._log.out('CHWP_Emergency_Shutdown: Waiting 90sec for CHWP to completely stop')
+                sleep(90)
                 self.cc.cold_grip()
+                self.cc.rotation_bias()
                 self._log.out('CHWP_Emergency_Shutdown: Shutdown complete')
        
         self.status = {'stopping': True, 'off': True}

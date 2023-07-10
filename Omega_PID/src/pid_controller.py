@@ -25,7 +25,7 @@ class PID:
         self.cur_freq = 0
         self.stop_params = [0.2, 0, 0]
         self.tune_params = [0.2, 115, 0]
-        self.set_direction('0')
+        #self.set_direction('0')
 
 ########################################################################################################################
 # Subprocesses

@@ -13,10 +13,11 @@ import chwp_control as cc  # noqa: E402
 
 def print_help():
     print('\n*** PB2b CHWP Control: Commands ***')
-    print('warm_grip:                           Grip the CHWP rotor when the crystat is warm')
+    print('warm_grip:                           Grip the CHWP rotor when the cryostat is warm')
     print('cooldown_grip:                       Periodically grip the CHWP rotor as the cryostat cools down')
-    print('cold_grip:                           Grip the CHWP rotor when the crystat is cold')
+    print('cold_grip:                           Grip the CHWP rotor when the cryostat is cold')
     print('gripper_home:                        Send all grippers to their home positions')
+    print("gripper_brake [value]:               Turn on/off the gripper brakes: ['on' or 'off']")
     print('gripper_alarm:                       Prints the current gripper alarm state')
     print('gripper_reset:                       Attempt to reset the current gripper alarm')
     print('gripper_reboot:                      Cycle power to the gripper controller')
@@ -24,15 +25,15 @@ def print_help():
     print("rotation_direction [value]:          Set the CHWP rotation direction: ['forward' or 'reverse']")
     print('rotation_status:                     Print status of the PID controller and PMX power supply')
     print('rotation_stop:                       Use PID to stop the CHWP rotation')
-    print('rotation_spin [value]:               Use PID to rotate CHWP at provided frequency [0.0 - 3.0]')
-    print('rotation_voltage [value]:            Set the drive voltage to a specific value [0.0 - 36.0]')
+    print('rotation_spin [value]:               Use PID to rotate CHWP at provided frequency: [0.0 - 3.0]')
+    print('rotation_voltage [value]:            Set the drive voltage to a specific value: [0.0 - 36.0]')
     print('rotation_off:                        Turn off drive voltage power supply')
-    print("bb_reboot [value]:                   Reboot Beaglebones [(optional) index '1' or '2']")
-    print("bb_packet_collect_start [value]:     Start process on Beaglebones to generate encoder packets")
+    print("bb_reboot [value]:                   Reboot Beaglebones: [(optional) index '1' or '2']")
+    print("bb_packet_collect_start [value]:     Start process on Beaglebones to generate encoder packets:")
     print("                                     [(optional) index '1' or '2']")
     print('bb_packet_collect_stop:              Stop process on Beaglebones generating encoder packets')
     print("emergency_monitor_start [value]:     Start emergency stop monitor: [(optional) verbose '0' or '1']")
-    print('emergency_monitor_stop:              Stop emergenct stop monitor')
+    print('emergency_monitor_stop:              Stop emergency stop monitor')
     print('slowdaq_publishers_start:            Start all CHWP slowdaq publishers')
     print('slowdaq_publishers_stop:             Stop all CHWP slowdaq publishers')
     print("help:                                Help menu (you're here now)")
@@ -51,7 +52,7 @@ def process_command(user_input):
         return
 
     func = cmds[cmd]
-    if func in [CC.rotation_direction, CC.rotation_bias]:
+    if func in [CC.rotation_direction, CC.rotation_bias, CC.gripper_brake]:
         func(str(args[1]))
     elif func in [CC.rotation_spin, CC.rotation_voltage]:
         func(float(args[1]))
@@ -76,6 +77,7 @@ cmds = {'warm_grip': CC.warm_grip,
         'cold_grip': CC.cold_grip,
         'cold_ungrip': CC.cold_ungrip,
         'gripper_home': CC.gripper_home,
+        'gripper_brake': CC.gripper_brake,
         'gripper_alarm': CC.gripper_alarm,
         'gripper_reset': CC.gripper_reset,
         'gripper_reboot': CC.gripper_reboot,
