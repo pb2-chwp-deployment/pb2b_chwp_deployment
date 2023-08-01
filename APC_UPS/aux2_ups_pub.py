@@ -1,8 +1,9 @@
 # Slowdaq publisher for the AUX2 UPS
 
 # Imports
-import os, sys
-from time import sleep
+import os
+import sys
+import time
 
 this_dir = os.path.dirname(__file__)
 sys.path.append(
@@ -21,12 +22,14 @@ from slowdaq.pb2 import Publisher
 pub = Publisher('PB2B_AUX2_UPS', cg.slowdaq_ip, cg.slowdaq_port)
 ups = aux2_ups_controller.UPS(cg.aux2_ups_ip)
 
+index = 0
+
 while True:
     try:
         ups.update()
     except:
         print('Connection Error! Trying again...')
-        sleep(2)
+        time.sleep(2)
     else:
         pub.serve()
         data_dict = {'input_voltage': ups.input_voltage,
@@ -36,7 +39,9 @@ while True:
                      'output_voltage': ups.output_voltage,
                      'output_freq': ups.output_freq,
                      'output_load': ups.output_load}
-        
+        data_dict['time'] = time.time()
+        data_dict['index'] = index
+
         print('PB2b AUX2 UPS: Status')
         for key in data_dict.keys():
             print(f'{key}: {data_dict[key]}')
@@ -44,4 +49,5 @@ while True:
 
         data = pub.pack(data_dict)
         pub.queue(data)
-        sleep(10)
+        index += 1
+        time.sleep(10)

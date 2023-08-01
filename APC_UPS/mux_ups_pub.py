@@ -2,7 +2,8 @@
 
 # Imports
 import os, sys
-from time import sleep
+import sys
+import time
 
 this_dir = os.path.dirname(__file__)
 sys.path.append(
@@ -21,6 +22,8 @@ from slowdaq.pb2 import Publisher
 pub = Publisher('mux_ups_info', cg.slowdaq_ip, cg.slowdaq_port)
 ups = mux_ups_controller.UPS(cg.mux_ups_ip)
 
+index = 0
+
 while True:
     try:
         ups.connect()
@@ -28,13 +31,14 @@ while True:
         ups.disconnect()
     except BlockingIOError:
         print('Busy port! Trying again...')
-        sleep(2)
+        time.sleep(2)
     else:
         pub.serve()
         data = pub.pack({'output_info': ups.output_info, 'input_info': ups.input_info,
                          'battery_percent': ups.battery_percent, 'battery_temp': ups.battery_temperature,
-                         'battery_life': ups.battery_life})
+                         'battery_life': ups.battery_life, 'time': time.time(), 'index': index})
         print('Sending data')
         pub.queue(data)
-        sleep(10)
+        index += 1
+        time.sleep(10)
 

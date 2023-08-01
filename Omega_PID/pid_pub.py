@@ -1,5 +1,6 @@
-from time import sleep
-import sys, os
+import time
+import sys
+import os
 
 this_dir = os.path.dirname(__file__)
 sys.path.append(
@@ -17,20 +18,23 @@ from slowdaq.pb2 import Publisher
 pub = Publisher('CHWP_PID', cg.slowdaq_ip, cg.slowdaq_port)
 pid = pc.PID(cg.pid_ip, cg.pid_port)
 
+index = 0
+
 while True:
     try:
         hwp_freq = pid.get_freq()
     except BlockingIOError:
         print('Busy port! Trying again...')
-        sleep(2)
+        time.sleep(2)
     else:
         if type(hwp_freq) == float or type(hwp_freq) == int:
             pub.serve()
-            data = pub.pack({'PID frequency':hwp_freq})
+            data = pub.pack({'PID_frequency': hwp_freq, 'time': time.time(), 'index': index})
             print(f'HWP Frequency: {hwp_freq}')
             pub.queue(data)
-            sleep(10)
+            index += 1
+            time.sleep(10)
         else:
             print('Bad outputs! tyring again...')
-            sleep(2)
+            time.sleep(2)
 

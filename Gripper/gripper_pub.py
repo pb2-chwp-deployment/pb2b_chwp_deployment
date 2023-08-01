@@ -1,5 +1,6 @@
-from time import sleep
-import sys, os
+import time 
+import sys
+import  os
 
 this_dir = os.path.dirname(__file__)
 sys.path.append(
@@ -21,14 +22,15 @@ while True:
         status = occ.open_command_close('status')        
     except BlockingIOError:
         print('Busy! Trying again...')
-        sleep(2)
+        time.sleep(2)
     else:
         if type(status) == dict:
             pub.serve()
+            status['time'] - time.time()
             data = pub.pack(status)
             pub.queue(data)
             print('Sending data...')
-            sleep(10)
+            time.sleep(10)
         else:
             print('Bad output, trying again...')
-            sleep(2)
+            time.sleep(2)

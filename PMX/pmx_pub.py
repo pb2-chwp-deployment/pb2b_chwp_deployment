@@ -1,5 +1,6 @@
-from time import sleep
-import sys, os
+import time
+import sys
+import os
 
 this_dir = os.path.dirname(__file__)
 sys.path.append(
@@ -15,6 +16,8 @@ sys.path.append(cg.slowdaq_folder)
 from slowdaq.pb2 import Publisher
 
 pub = Publisher('CHWP_PMX',cg.slowdaq_ip,cg.slowdaq_port)
+
+index = 0
 
 while True:
     try:
@@ -34,7 +37,7 @@ while True:
 					   lock='.bias2_port_busy')[1]
     except BlockingIOError:
         print('Busy port! Trying again...')
-        sleep(2)
+        time.sleep(2)
     else:
         if type(d_voltage)==float and type(d_current)==float and type(d_output)==int:
             pub.serve()
@@ -46,10 +49,12 @@ while True:
                              		       'Output status':b1_output},
 			     'Bias2 Kikusui': {'Measured voltage': b2_voltage,
                              		       'Measured current':b2_current,
-                             		       'Output status':b2_output}})
+                             		       'Output status':b2_output},
+                             'time': time.time(), 'index': index})
             pub.queue(data)
-            sleep(10)
+            index += 1
+            time.sleep(10)
         else:
             print('Bad outputs! trying again...')
-            sleep(2)
+            time.sleep(2)
 
