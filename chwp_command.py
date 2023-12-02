@@ -111,13 +111,13 @@ if len(sys.argv) > 1:
     func = cmds[args.command]
 
     if func == CC.rotation_direction:
-        func(args.direction)
+        func(direction = args.direction)
     elif func == CC.rotation_spin:
-        func(args.frequency)
+        func(frequency = args.frequency, set_dir = False)
     elif func == CC.rotation_voltage:
-        func(args.voltage)
+        func(voltage = args.voltage, set_dir = False)
     elif func == CC.rotation_bias:
-        func(args.power)
+        func(power = args.power)
     else:
         func()
 else:

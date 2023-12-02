@@ -243,7 +243,7 @@ class CHWP_Control:
                 cur_freq = self.pid.get_freq()
                 print('Current Frequency =', cur_freq, 'Hz    ', end = '\r')
             
-                if abs(start_time - time.perf_counter()) > 8 and cur_freq >= start_freq \
+                if abs(start_time - time.perf_counter()) > 20 and cur_freq >= start_freq \
                         and start_dir == self._pid_direction:
                     self._log.out('CHWP_Control.rotation_stop(): Trying other direction')
                     self.rotation_stop()
@@ -271,7 +271,7 @@ class CHWP_Control:
             self._log.err("CHWP_Control.rotation_stop(): User interrupt")
             return False
 
-    def rotation_spin(self, frequency = 0.0):
+    def rotation_spin(self, frequency = 0.0, set_dir = True):
         if type(frequency) not in [int, float]:
             self_log.out('Invalid argument type')
             return False
@@ -280,7 +280,8 @@ class CHWP_Control:
             try:
                 self._log.out('Starting time is {}'.format(time.time()))
                 self._rotation_mode('PID')
-                self.rotation_direction(self._pid_direction)
+                if set_dir:
+                    self.rotation_direction(direction = self._pid_direction)
                 self.pid.declare_freq(float(frequency))
                 self.pid.tune_freq()
                 pocc.open_command_close('ON')
@@ -302,14 +303,15 @@ class CHWP_Control:
             self._log.out('Invalid argument value')
             return False
 
-    def rotation_voltage(self, voltage = 0.0):
+    def rotation_voltage(self, voltage = 0.0, set_dir = True):
         if type(voltage) not in [float, int]:
             self._log.out('Invalid argument type')
             return False
         
         if float(voltage) <= 32.0 and float(voltage) >= 0.0:
             self._rotation_mode('VOLT')
-            self.rotation_direction(self._pid_direction)
+            if set_dir:
+                self.rotation_direction(direction = self._pid_direction)
             pocc.open_command_close('V {}'.format(voltage))
             pocc.open_command_close('ON')
             self._log.out("CHWP_Control.rotation_voltage(): CHWP drive voltage set to {} volts".format(voltage))
